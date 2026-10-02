@@ -1,0 +1,351 @@
+[
+    {
+      "id": "EXERCISE_HIGH_WIND",
+      "category": "outdoor_exercise",
+      "name": "High wind during outdoor exercise",
+      "priority": 90,
+      "applies_to": ["cycling", "running", "hiking"],
+      "conditions": {
+        "type": "numeric",
+        "field": "wind_gusts_10m",
+        "operator": ">=",
+        "value": 40
+      },
+      "decision": {
+        "severity": "high",
+        "action": "avoid",
+        "guidance": "Avoid strenuous outdoor exercise because strong wind gusts can make outdoor activity unsafe."
+      }
+    },
+    {
+      "id": "EXERCISE_HEAVY_RAIN",
+      "category": "outdoor_exercise",
+      "name": "Heavy rain during outdoor exercise",
+      "priority": 95,
+      "applies_to": ["cycling", "running", "hiking"],
+      "conditions": {
+        "type": "numeric",
+        "field": "precipitation",
+        "operator": ">=",
+        "value": 10
+      },
+      "decision": {
+        "severity": "high",
+        "action": "avoid",
+        "guidance": "Avoid outdoor exercise because heavy precipitation can create unsafe conditions and poor visibility."
+      }
+    },
+    {
+      "id": "EXERCISE_LIGHT_RAIN",
+      "category": "outdoor_exercise",
+      "name": "Light rain during outdoor exercise",
+      "priority": 40,
+      "applies_to": ["cycling", "running", "walking"],
+      "conditions": {
+        "type": "numeric",
+        "field": "rain",
+        "operator": ">",
+        "value": 0
+      },
+      "decision": {
+        "severity": "moderate",
+        "action": "caution",
+        "guidance": "Outdoor exercise may be possible, but expect wet conditions and reduced traction."
+      }
+    },
+    {
+      "id": "EXERCISE_EXTREME_HEAT",
+      "category": "outdoor_exercise",
+      "name": "Extreme heat during outdoor exercise",
+      "priority": 90,
+      "applies_to": ["cycling", "running", "hiking", "walking"],
+      "conditions": {
+        "type": "numeric",
+        "field": "apparent_temperature",
+        "operator": ">=",
+        "value": 35
+      },
+      "decision": {
+        "severity": "high",
+        "action": "avoid",
+        "guidance": "Avoid strenuous outdoor exercise in extreme apparent temperatures."
+      }
+    },
+    {
+      "id": "TRAVEL_THUNDERSTORM",
+      "category": "travel",
+      "name": "Thunderstorm during outdoor travel",
+      "priority": 100,
+      "applies_to": ["travel", "commuting", "outdoor_travel"],
+      "conditions": {
+        "type": "weather_condition",
+        "weather_codes": [95, 96, 99]
+      },
+      "decision": {
+        "severity": "critical",
+        "action": "avoid",
+        "guidance": "Avoid unnecessary outdoor travel while thunderstorms are active."
+      }
+    },
+    {
+      "id": "TRAVEL_HEAVY_RAIN",
+      "category": "travel",
+      "name": "Heavy rain during outdoor travel",
+      "priority": 85,
+      "applies_to": ["travel", "commuting", "outdoor_travel"],
+      "conditions": {
+        "type": "numeric",
+        "field": "precipitation",
+        "operator": ">=",
+        "value": 10
+      },
+      "decision": {
+        "severity": "high",
+        "action": "avoid",
+        "guidance": "Avoid unnecessary outdoor travel during heavy precipitation and reconsider the trip if conditions worsen."
+      }
+    },
+    {
+      "id": "TRAVEL_STRONG_WIND",
+      "category": "travel",
+      "name": "Strong wind during outdoor travel",
+      "priority": 60,
+      "applies_to": ["travel", "commuting", "outdoor_travel"],
+      "conditions": {
+        "type": "numeric",
+        "field": "wind_gusts_10m",
+        "operator": ">=",
+        "value": 50
+      },
+      "decision": {
+        "severity": "high",
+        "action": "caution",
+        "guidance": "Use caution during outdoor travel because strong wind gusts may create difficult conditions."
+      }
+    },
+    {
+      "id": "TRAVEL_GOOD_WEATHER",
+      "category": "travel",
+      "name": "Generally favorable travel weather",
+      "priority": 20,
+      "applies_to": ["travel", "commuting", "outdoor_travel"],
+      "conditions": {
+        "type": "weather_condition",
+        "weather_codes": [0, 1, 2]
+      },
+      "decision": {
+        "severity": "low",
+        "action": "proceed",
+        "guidance": "Weather conditions are generally favorable for normal outdoor travel."
+      }
+    },
+    {
+      "id": "ELDERLY_EXTREME_HEAT",
+      "category": "vulnerable_groups",
+      "name": "Extreme heat for elderly people",
+      "priority": 100,
+      "applies_to": ["elderly"],
+      "conditions": {
+        "type": "numeric",
+        "field": "apparent_temperature",
+        "operator": ">=",
+        "value": 40
+      },
+      "decision": {
+        "severity": "high",
+        "action": "avoid",
+        "guidance": "Avoid unnecessary outdoor exposure because extreme apparent temperatures can create significant heat-related risk."
+      }
+    },
+    {
+      "id": "ELDERLY_HIGH_HEAT",
+      "category": "vulnerable_groups",
+      "name": "High heat for elderly people",
+      "priority": 75,
+      "applies_to": ["elderly"],
+      "conditions": {
+        "type": "numeric",
+        "field": "apparent_temperature",
+        "operator": ">=",
+        "value": 35
+      },
+      "decision": {
+        "severity": "moderate",
+        "action": "caution",
+        "guidance": "Limit prolonged outdoor exposure and take appropriate precautions in high heat."
+      }
+    },
+    {
+      "id": "CHILD_THUNDERSTORM",
+      "category": "vulnerable_groups",
+      "name": "Thunderstorm exposure for children",
+      "priority": 100,
+      "applies_to": ["child", "children"],
+      "conditions": {
+        "type": "weather_condition",
+        "weather_codes": [95, 96, 99]
+      },
+      "decision": {
+        "severity": "critical",
+        "action": "avoid",
+        "guidance": "Keep children indoors while thunderstorms are active."
+      }
+    },
+    {
+      "id": "CHILD_HEAVY_RAIN",
+      "category": "vulnerable_groups",
+      "name": "Heavy rain exposure for children",
+      "priority": 85,
+      "applies_to": ["child", "children"],
+      "conditions": {
+        "type": "numeric",
+        "field": "precipitation",
+        "operator": ">=",
+        "value": 10
+      },
+      "decision": {
+        "severity": "high",
+        "action": "avoid",
+        "guidance": "Avoid unnecessary outdoor activities for children during heavy precipitation."
+      }
+    },
+    {
+      "id": "PET_EXTREME_HEAT",
+      "category": "vulnerable_groups",
+      "name": "Extreme heat for pets",
+      "priority": 90,
+      "applies_to": ["pet", "dog", "cat"],
+      "conditions": {
+        "type": "numeric",
+        "field": "apparent_temperature",
+        "operator": ">=",
+        "value": 35
+      },
+      "decision": {
+        "severity": "high",
+        "action": "avoid",
+        "guidance": "Avoid prolonged outdoor activity for pets in extreme apparent temperatures."
+      }
+    },
+    {
+      "id": "PICNIC_SUITABILITY",
+      "category": "general_outdoor",
+      "name": "Picnic suitability",
+      "priority": 30,
+      "applies_to": ["picnic"],
+      "conditions": {
+        "type": "fuzzy_weather_assessment"
+      },
+      "decision": {
+        "severity": "low",
+        "action": "assess",
+        "guidance": "Assess overall weather suitability for a picnic using precipitation, rain probability, wind, temperature, and significant weather conditions rather than relying on a single threshold."
+      }
+    },
+    {
+        "id": "EXERCISE_FAVORABLE_WEATHER",
+        "category": "outdoor_exercise",
+        "name": "Favorable weather for outdoor exercise",
+        "priority": 10,
+        "applies_to": ["cycling", "running", "hiking", "walking"],
+        "conditions": {
+          "type": "favorable_weather"
+        },
+        "decision": {
+          "severity": "low",
+          "action": "proceed",
+          "guidance": "Weather conditions are generally favorable for the requested outdoor exercise."
+        }
+      },
+      {
+        "id": "TRAVEL_FAVORABLE_WEATHER",
+        "category": "travel",
+        "name": "Favorable weather for outdoor travel",
+        "priority": 10,
+        "applies_to": ["travel", "commuting", "outdoor_travel"],
+        "conditions": {
+          "type": "favorable_weather"
+        },
+        "decision": {
+          "severity": "low",
+          "action": "proceed",
+          "guidance": "Weather conditions are generally favorable for the requested outdoor travel."
+        }
+      },
+      {
+        "id": "VULNERABLE_FAVORABLE_WEATHER",
+        "category": "vulnerable_groups",
+        "name": "Generally favorable weather for vulnerable groups",
+        "priority": 10,
+        "applies_to": ["elderly", "child", "children", "pet", "dog", "cat"],
+        "conditions": {
+          "type": "favorable_weather"
+        },
+        "decision": {
+          "severity": "low",
+          "action": "proceed",
+          "guidance": "Weather conditions do not trigger a specific adverse-weather SOP for the identified vulnerable group."
+        }
+      },
+      {
+        "id": "EXERCISE_FAVORABLE_WEATHER",
+        "category": "outdoor_exercise",
+        "name": "Favorable weather for outdoor exercise",
+        "priority": 10,
+        "applies_to": [
+          "cycling",
+          "running",
+          "hiking",
+          "walking"
+        ],
+        "conditions": {
+          "type": "favorable_weather"
+        },
+        "decision": {
+          "severity": "low",
+          "action": "proceed",
+          "guidance": "Weather conditions are generally favorable for the requested outdoor exercise."
+        }
+      },
+      {
+        "id": "TRAVEL_FAVORABLE_WEATHER",
+        "category": "travel",
+        "name": "Favorable weather for outdoor travel",
+        "priority": 10,
+        "applies_to": [
+          "travel",
+          "commuting",
+          "outdoor_travel"
+        ],
+        "conditions": {
+          "type": "favorable_weather"
+        },
+        "decision": {
+          "severity": "low",
+          "action": "proceed",
+          "guidance": "Weather conditions are generally favorable for the requested outdoor travel."
+        }
+      },
+      {
+        "id": "VULNERABLE_FAVORABLE_WEATHER",
+        "category": "vulnerable_groups",
+        "name": "Generally favorable weather for vulnerable groups",
+        "priority": 10,
+        "applies_to": [
+          "elderly",
+          "child",
+          "children",
+          "pet",
+          "dog",
+          "cat"
+        ],
+        "conditions": {
+          "type": "favorable_weather"
+        },
+        "decision": {
+          "severity": "low",
+          "action": "proceed",
+          "guidance": "Weather conditions do not trigger a specific adverse-weather SOP for the identified vulnerable group."
+        }
+      }
+]
