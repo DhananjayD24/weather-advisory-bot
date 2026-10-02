@@ -33,6 +33,11 @@ def compare(value: float, operator: str, threshold: float) -> bool:
 
     return False
 
+
+class IncompleteWeatherData(Exception):
+    pass
+
+
 SEVERE_WEATHER_CODES = {95, 96, 99}
 
 
@@ -43,6 +48,21 @@ def get_weather_codes(weather: dict[str, Any]) -> list[int]:
 
     hourly = weather.get("hourly", {})
     codes = hourly.get("weather_code", [])
+    selected_indexes = weather.get("selected_hour_indexes")
+
+    if selected_indexes is not None:
+        selected_codes = [
+            codes[index]
+            for index in selected_indexes
+            if index < len(codes) and isinstance(codes[index], int)
+        ]
+        if selected_codes:
+            return selected_codes
+
+    current_code = weather.get("current", {}).get("weather_code")
+
+    if isinstance(current_code, int):
+        return [current_code]
 
     valid_codes = [
         code for code in codes
@@ -51,11 +71,6 @@ def get_weather_codes(weather: dict[str, Any]) -> list[int]:
 
     if valid_codes:
         return valid_codes
-
-    current_code = weather.get("current", {}).get("weather_code")
-
-    if isinstance(current_code, int):
-        return [current_code]
 
     return []
 
@@ -85,7 +100,9 @@ def evaluate_condition(
         actual_value = current.get(field)
 
         if actual_value is None:
-            return False
+            raise IncompleteWeatherData(
+                f"Weather data is missing the required field '{field}'."
+            )
 
         return compare(actual_value, operator, threshold)
 
@@ -94,6 +111,10 @@ def evaluate_condition(
         allowed_codes = condition.get("weather_codes", [])
 
         weather_codes = get_weather_codes(weather)
+        if not weather_codes:
+            raise IncompleteWeatherData(
+                "Weather data is missing the required weather code."
+            )
 
         return any(
             code in allowed_codes
@@ -107,16 +128,17 @@ def evaluate_condition(
         wind_gusts = current.get("wind_gusts_10m")
         apparent_temperature = current.get("apparent_temperature")
 
-        if any(
-            value is None
-            for value in [
-                weather_code,
-                precipitation,
-                wind_gusts,
-                apparent_temperature,
-            ]
-        ):
-            return False
+        required_values = {
+            "weather_code": weather_code,
+            "precipitation": precipitation,
+            "wind_gusts_10m": wind_gusts,
+            "apparent_temperature": apparent_temperature,
+        }
+        missing = [name for name, value in required_values.items() if value is None]
+        if missing:
+            raise IncompleteWeatherData(
+                f"Weather data is missing required field(s): {', '.join(missing)}."
+            )
 
         return (
             weather_code in [0, 1, 2]
@@ -138,19 +160,25 @@ def evaluate_condition(
             "apparent_temperature"
         )
 
-        if has_thunderstorm(weather):
+        weather_codes = get_weather_codes(weather)
+        if not weather_codes:
+            raise IncompleteWeatherData(
+                "Weather data is missing the required weather code."
+            )
+        if any(code in SEVERE_WEATHER_CODES for code in weather_codes):
             return False
 
-        if any(
-            value is None
-            for value in [
-                precipitation,
-                precipitation_probability,
-                wind_gusts,
-                apparent_temperature,
-            ]
-        ):
-            return False
+        required_values = {
+            "precipitation": precipitation,
+            "precipitation_probability": precipitation_probability,
+            "wind_gusts_10m": wind_gusts,
+            "apparent_temperature": apparent_temperature,
+        }
+        missing = [name for name, value in required_values.items() if value is None]
+        if missing:
+            raise IncompleteWeatherData(
+                f"Weather data is missing required field(s): {', '.join(missing)}."
+            )
 
         # A picnic is considered broadly suitable when
         # there is little/no precipitation, reasonable wind,
@@ -179,6 +207,40 @@ def sop_applies_to_activity(
     ]
 
     return activity in applicable_activities
+
+
+def required_weather_fields(activity: str | None) -> set[str]:
+    """Return API fields needed by policies applicable to this activity."""
+    fields: set[str] = set()
+
+    for sop in load_sops():
+        if not sop_applies_to_activity(sop, activity):
+            continue
+
+        condition = sop.get("conditions", {})
+        condition_type = condition.get("type")
+
+        if condition_type == "numeric" and condition.get("field"):
+            fields.add(condition["field"])
+        elif condition_type == "weather_condition":
+            fields.add("weather_code")
+        elif condition_type == "favorable_weather":
+            fields.update({
+                "weather_code",
+                "precipitation",
+                "wind_gusts_10m",
+                "apparent_temperature",
+            })
+        elif condition_type == "fuzzy_weather_assessment":
+            fields.update({
+                "weather_code",
+                "precipitation",
+                "precipitation_probability",
+                "wind_gusts_10m",
+                "apparent_temperature",
+            })
+
+    return fields
 
 
 def match_sops(

@@ -12,6 +12,7 @@ class WeatherError(Exception):
 async def fetch_weather(
     latitude: float,
     longitude: float,
+    required_fields: set[str] | None = None,
 ) -> dict:
     """
     Fetch live weather data from Open-Meteo.
@@ -57,6 +58,11 @@ async def fetch_weather(
 
         "timezone": "auto",
     }
+
+    policy_fields = required_fields or set()
+    params["hourly"] = ",".join(
+        sorted(set(params["hourly"].split(",")) | policy_fields)
+    )
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:

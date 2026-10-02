@@ -6,10 +6,6 @@ def merge_query_context(
     state: WeatherState,
     parsed: ParsedQuery,
 ) -> WeatherState:
-    """
-    Merge information from the current user message with
-    information retained from previous turns.
-    """
 
     old_activity = state.get("activity")
     old_location = state.get("location")
@@ -36,6 +32,7 @@ def merge_query_context(
         "location": new_location,
         "time_context": new_time,
         "user_type": new_user_type,
+        "error": None,   # IMPORTANT
     }
 
     if context_changed:
@@ -43,9 +40,9 @@ def merge_query_context(
         updated_state["matched_sops"] = []
         updated_state["selected_sop"] = None
         updated_state["decision"] = None
+        updated_state["weather_facts"] = None
+        updated_state["response"] = None
 
-    # Coordinates belong specifically to the resolved location.
-    # They must be discarded when the location changes.
     if location_changed:
         updated_state["latitude"] = None
         updated_state["longitude"] = None

@@ -2,6 +2,10 @@ from datetime import datetime
 from typing import Any
 
 
+class WeatherContextError(Exception):
+    pass
+
+
 def _parse_datetime(value: str) -> datetime:
     return datetime.fromisoformat(value)
 
@@ -26,7 +30,7 @@ def _get_hourly_indexes(
     current_time_raw = weather.get("current", {}).get("time")
 
     if not current_time_raw:
-        return [0]
+        return []
 
     current_time = _parse_datetime(current_time_raw)
     current_date = current_time.date()
@@ -41,7 +45,7 @@ def _get_hourly_indexes(
             if time >= current_time
         ]
 
-        return future_indexes[:1] or [0]
+        return future_indexes[:1]
 
     # Today
     if context in {"today", "this day"}:
@@ -52,11 +56,7 @@ def _get_hourly_indexes(
             and time >= current_time
         ]
 
-        return indexes or [
-            i
-            for i, time in enumerate(parsed_times)
-            if time.date() == current_date
-        ]
+        return indexes
 
     # This evening / tonight
     if context in {
@@ -69,6 +69,7 @@ def _get_hourly_indexes(
             i
             for i, time in enumerate(parsed_times)
             if time.date() == current_date
+            and time >= current_time
             and 17 <= time.hour <= 22
         ]
 
@@ -178,34 +179,28 @@ def _aggregate_hourly_weather(
             if index < len(source) and source[index] is not None
         ]
 
-    def maximum(field: str, default: float = 0.0) -> float:
+    def maximum(field: str) -> float | None:
         field_values = values(field)
 
         if not field_values:
-            return default
+            return None
 
         return max(field_values)
 
-    weather_codes = values("weather_code")
+    selected: dict[str, Any] = {}
+    for field in hourly:
+        if field == "time":
+            continue
+        field_values = values(field)
+        if field_values and all(
+            isinstance(value, (int, float)) and not isinstance(value, bool)
+            for value in field_values
+        ):
+            selected[field] = max(field_values)
+        else:
+            selected[field] = None
 
-    return {
-        "temperature_2m": maximum("temperature_2m"),
-        "apparent_temperature": maximum("apparent_temperature"),
-        "precipitation_probability": maximum(
-            "precipitation_probability"
-        ),
-        "precipitation": maximum("precipitation"),
-        "rain": maximum("rain"),
-        "showers": maximum("showers"),
-        "snowfall": maximum("snowfall"),
-        "weather_code": (
-            max(weather_codes)
-            if weather_codes
-            else None
-        ),
-        "wind_speed_10m": maximum("wind_speed_10m"),
-        "wind_gusts_10m": maximum("wind_gusts_10m"),
-    }
+    return selected
 
 
 def select_weather_context(
@@ -225,7 +220,9 @@ def select_weather_context(
     )
 
     if not indexes:
-        return weather
+        if (time_context or "now").lower() in {"now", "currently", "right now"}:
+            return weather
+        raise WeatherContextError("No forecast data is available for the requested time.")
 
     selected = _aggregate_hourly_weather(
         weather,

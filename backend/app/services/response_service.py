@@ -9,23 +9,25 @@ def build_weather_summary(weather: dict[str, Any]) -> str:
     precipitation = current.get("precipitation")
     wind_speed = current.get("wind_speed_10m")
     wind_gusts = current.get("wind_gusts_10m")
+    units_key = "hourly_units" if "selected_hour_indexes" in weather else "current_units"
+    units = weather.get(units_key, {})
 
     facts = []
 
     if temperature is not None:
-        facts.append(f"temperature {temperature}°C")
+        facts.append(f"temperature {temperature}{units.get('temperature_2m', '')}")
 
     if apparent_temperature is not None:
-        facts.append(f"feels-like {apparent_temperature}°C")
+        facts.append(f"feels-like {apparent_temperature}{units.get('apparent_temperature', '')}")
 
     if precipitation is not None:
-        facts.append(f"precipitation {precipitation} mm")
+        facts.append(f"precipitation {precipitation}{units.get('precipitation', '')}")
 
     if wind_speed is not None:
-        facts.append(f"wind {wind_speed} km/h")
+        facts.append(f"wind {wind_speed}{units.get('wind_speed_10m', '')}")
 
     if wind_gusts is not None:
-        facts.append(f"gusts {wind_gusts} km/h")
+        facts.append(f"gusts {wind_gusts}{units.get('wind_gusts_10m', '')}")
 
     if not facts:
         return "Live weather data was retrieved, but the relevant weather values were unavailable."
@@ -64,7 +66,7 @@ def build_sop_response(
         f"SOP: {sop_name} ({sop_id})\n"
         f"Severity: {severity}\n"
         f"Action: {action}\n"
-        f"Current weather: {weather_summary}\n"
+        f"Weather for requested period: {weather_summary}\n"
         f"Guidance: {guidance}"
     )
 
@@ -75,7 +77,10 @@ def build_error_response(state: dict[str, Any]) -> str:
     if not error:
         return "I could not provide guidance for this request."
 
-    return f"I could not provide weather-based guidance: {error}"
+    return (
+        f"I could not evaluate which SOP applies because {error}. "
+        "I will not guess weather conditions or provide unsupported guidance."
+    )
 
 
 def build_response(state: dict[str, Any]) -> str:

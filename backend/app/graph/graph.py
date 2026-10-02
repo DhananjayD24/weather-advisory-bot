@@ -17,13 +17,17 @@ from app.services.weather_service import (
 from app.services.sop_service import (
     match_sops as find_matching_sops,
     resolve_sop_matches,
+    IncompleteWeatherData,
+    required_weather_fields,
 )
 
 from app.services.response_service import build_response
 
-from app.services.weather_context_service import select_weather_context
+from app.services.weather_context_service import (
+    select_weather_context,
+    WeatherContextError,
+)
 
-from app.services.response_llm_service import generate_llm_response
 
 
 def parse_query(state: WeatherState) -> WeatherState:
@@ -149,6 +153,7 @@ async def fetch_weather(state: WeatherState) -> WeatherState:
         weather = await fetch_weather_service(
             latitude,
             longitude,
+            required_fields=required_weather_fields(state.get("activity")),
         )
 
         return {
@@ -192,15 +197,23 @@ def match_sops(state: WeatherState) -> WeatherState:
             "error": "Weather data is unavailable.",
         }
 
-    selected_weather = select_weather_context(
-        weather=weather,
-        time_context=time_context,
-    )
-
-    matched = find_matching_sops(
-        weather=selected_weather,
-        activity=activity,
-    )
+    try:
+        selected_weather = select_weather_context(
+            weather=weather,
+            time_context=time_context,
+        )
+        matched = find_matching_sops(
+            weather=selected_weather,
+            activity=activity,
+        )
+    except (WeatherContextError, IncompleteWeatherData) as exc:
+        return {
+            **state,
+            "matched_sops": [],
+            "selected_sop": None,
+            "decision": None,
+            "error": str(exc),
+        }
 
     return {
         **state,
@@ -259,7 +272,7 @@ def weather_error(state: WeatherState) -> WeatherState:
 def generate_response(state: WeatherState) -> WeatherState:
     print("NODE: generate_response")
 
-    response = generate_llm_response(state)
+    response = build_response(state)
 
     return {
         **state,

@@ -1,6 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
 
+const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || "").replace(
+  /\/+$/,
+  "",
+);
+
+function apiUrl(path) {
+  if (!API_BASE_URL)
+    throw new Error(
+      "VITE_BACKEND_URL is not set. Copy frontend/.env.example to frontend/.env and point it at the backend origin.",
+    );
+  return `${API_BASE_URL}${path}`;
+}
+
 function getSessionId() {
   const key = "weather-advisory-session";
   let id = sessionStorage.getItem(key);
@@ -32,7 +45,7 @@ function App() {
       setMessages((items) => [...items, { role: "user", text: message }]);
     setLoading(true);
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch(apiUrl("/chat"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message, session_id: getSessionId() }),
