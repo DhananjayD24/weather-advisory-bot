@@ -19,6 +19,12 @@ from app.services.sop_service import (
     resolve_sop_matches,
 )
 
+from app.services.response_service import build_response
+
+from app.services.weather_context_service import select_weather_context
+
+from app.services.response_llm_service import generate_llm_response
+
 
 def parse_query(state: WeatherState) -> WeatherState:
     print("NODE: parse_query")
@@ -68,7 +74,10 @@ def route_context(
 
     print("ROUTER: route_context")
 
-    if state.get("location"):
+    if (
+        state.get("latitude") is not None
+        and state.get("longitude") is not None
+    ):
         return "fetch_weather"
 
     return "resolve_location"
@@ -174,21 +183,28 @@ def route_after_weather(state: WeatherState):
 def match_sops(state: WeatherState) -> WeatherState:
     weather = state.get("weather")
     activity = state.get("activity")
+    time_context = state.get("time_context")
 
     if not weather:
         return {
             **state,
             "matched_sops": [],
-            "error": "Weather data is unavailable."
+            "error": "Weather data is unavailable.",
         }
 
-    matched = find_matching_sops(
+    selected_weather = select_weather_context(
         weather=weather,
+        time_context=time_context,
+    )
+
+    matched = find_matching_sops(
+        weather=selected_weather,
         activity=activity,
     )
 
     return {
         **state,
+        "weather": selected_weather,
         "matched_sops": matched,
     }
 
@@ -242,7 +258,13 @@ def weather_error(state: WeatherState) -> WeatherState:
 
 def generate_response(state: WeatherState) -> WeatherState:
     print("NODE: generate_response")
-    return state
+
+    response = generate_llm_response(state)
+
+    return {
+        **state,
+        "response": response,
+    }
 
 
 def build_graph():

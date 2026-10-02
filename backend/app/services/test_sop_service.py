@@ -92,3 +92,63 @@ def test_no_matching_sop_returns_none():
     selected = resolve_sop_matches([])
 
     assert selected is None
+    
+def test_thunderstorm_matches_thunderstorm_sop():
+    weather = {
+        "current": {
+            "weather_code": 95,
+            "precipitation": 2,
+            "precipitation_probability": 90,
+            "wind_gusts_10m": 25,
+            "apparent_temperature": 27,
+        },
+        "hourly": {
+            "weather_code": [0, 95, 95],
+        },
+    }
+
+    matched = match_sops(weather, "children")
+
+    ids = [sop["id"] for sop in matched]
+
+    assert "CHILD_THUNDERSTORM" in ids
+    
+def test_favorable_weather_matches_picnic():
+    weather = {
+        "current": {
+            "weather_code": 1,
+            "precipitation": 0,
+            "precipitation_probability": 10,
+            "wind_gusts_10m": 12,
+            "apparent_temperature": 24,
+        },
+        "hourly": {
+            "weather_code": [0, 1, 2],
+        },
+    }
+
+    matched = match_sops(weather, "picnic")
+
+    ids = [sop["id"] for sop in matched]
+
+    assert "PICNIC_SUITABILITY" in ids
+    
+def test_thunderstorm_does_not_match_picnic_suitability():
+    weather = {
+        "current": {
+            "weather_code": 95,
+            "precipitation": 0,
+            "precipitation_probability": 20,
+            "wind_gusts_10m": 10,
+            "apparent_temperature": 24,
+        },
+        "hourly": {
+            "weather_code": [0, 95],
+        },
+    }
+
+    matched = match_sops(weather, "picnic")
+
+    ids = [sop["id"] for sop in matched]
+
+    assert "PICNIC_SUITABILITY" not in ids

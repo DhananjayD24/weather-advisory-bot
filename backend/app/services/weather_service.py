@@ -40,19 +40,20 @@ async def fetch_weather(
 
         # Hourly forecast
         "hourly": ",".join([
-            "temperature_2m",
-            "precipitation_probability",
-            "precipitation",
-            "rain",
-            "showers",
-            "snowfall",
-            "weather_code",
-            "wind_speed_10m",
-            "wind_gusts_10m",
-        ]),
+    "temperature_2m",
+    "apparent_temperature",
+    "precipitation_probability",
+    "precipitation",
+    "rain",
+    "showers",
+    "snowfall",
+    "weather_code",
+    "wind_speed_10m",
+    "wind_gusts_10m",
+]),
 
         # Enough forecast horizon for today/tomorrow queries
-        "forecast_days": 2,
+        "forecast_days": 3,
 
         "timezone": "auto",
     }

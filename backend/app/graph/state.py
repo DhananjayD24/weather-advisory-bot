@@ -28,3 +28,5 @@ class WeatherState(TypedDict, total=False):
 
     # Error handling
     error: Optional[str]
+    
+    response: Optional[str]

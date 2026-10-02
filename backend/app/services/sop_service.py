@@ -33,6 +33,39 @@ def compare(value: float, operator: str, threshold: float) -> bool:
 
     return False
 
+SEVERE_WEATHER_CODES = {95, 96, 99}
+
+
+def get_weather_codes(weather: dict[str, Any]) -> list[int]:
+    """
+    Return all relevant weather codes from the selected weather period.
+    """
+
+    hourly = weather.get("hourly", {})
+    codes = hourly.get("weather_code", [])
+
+    valid_codes = [
+        code for code in codes
+        if isinstance(code, int)
+    ]
+
+    if valid_codes:
+        return valid_codes
+
+    current_code = weather.get("current", {}).get("weather_code")
+
+    if isinstance(current_code, int):
+        return [current_code]
+
+    return []
+
+
+def has_thunderstorm(weather: dict[str, Any]) -> bool:
+    return any(
+        code in SEVERE_WEATHER_CODES
+        for code in get_weather_codes(weather)
+    )
+    
 def evaluate_condition(
     condition: dict[str, Any],
     weather: dict[str, Any],
@@ -58,14 +91,14 @@ def evaluate_condition(
 
     # Weather-code condition
     if condition_type == "weather_condition":
-        weather_code = current.get("weather_code")
-
-        if weather_code is None:
-            return False
-
         allowed_codes = condition.get("weather_codes", [])
 
-        return weather_code in allowed_codes
+        weather_codes = get_weather_codes(weather)
+
+        return any(
+            code in allowed_codes
+            for code in weather_codes
+        )
 
     # Favorable-weather condition
     if condition_type == "favorable_weather":
@@ -92,7 +125,42 @@ def evaluate_condition(
             and apparent_temperature < 35
         )
 
-    return False
+        # Fuzzy weather assessment
+    if condition_type == "fuzzy_weather_assessment":
+        current = weather.get("current", {})
+
+        precipitation = current.get("precipitation")
+        precipitation_probability = current.get(
+            "precipitation_probability"
+        )
+        wind_gusts = current.get("wind_gusts_10m")
+        apparent_temperature = current.get(
+            "apparent_temperature"
+        )
+
+        if has_thunderstorm(weather):
+            return False
+
+        if any(
+            value is None
+            for value in [
+                precipitation,
+                precipitation_probability,
+                wind_gusts,
+                apparent_temperature,
+            ]
+        ):
+            return False
+
+        # A picnic is considered broadly suitable when
+        # there is little/no precipitation, reasonable wind,
+        # and a comfortable apparent temperature.
+        return (
+            precipitation == 0
+            and precipitation_probability < 30
+            and wind_gusts < 30
+            and 15 <= apparent_temperature < 35
+        )
 
 def sop_applies_to_activity(
     sop: dict[str, Any],
